@@ -1,0 +1,87 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace AlgLab1
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            int N = int.Parse(Console.ReadLine());
+            int[] array = new int[N];
+            for (int i = 0; i < array.Length; i++)
+                array[i] = new Random().Next(0, 1000);
+
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
+            QuickSort(array);
+
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+            Console.WriteLine(elapsedMs);
+        }
+
+        public static void QuickSort(int[] a)
+        {
+            int h;
+            for (h = 1; h <= a.Length / 9; h = 3 * h + 1) ;
+            for (; h > 0; h /= 3)
+            {
+                for (int i = h; i < a.Length; ++i)
+                {
+                    int t = a[i];
+                    int j = i;
+                    while (j >= h && a[j - h].CompareTo(t) > 0)
+                    {
+                        a[j] = a[j - h];
+                        j -= h;
+                    }
+                    a[j] = t;
+                }
+            }
+        }
+
+        public static void BubbleSort(int[] array)
+        {
+            int temp;
+            for (int i = 0; i < array.Length; i++)
+            {
+                for (int j = i + 1; j < array.Length; j++)
+                {
+                    if (array[i] > array[j])
+                    {
+                        temp = array[i];
+                        array[i] = array[j];
+                        array[j] = temp;
+                    }
+                }
+            }
+        }
+
+        public void GradualSearch(int[] array)
+        {
+            //int k = int.Parse(Console.ReadLine());
+            int k = array[array.Length - 1];
+            int num = k;
+            int position = 0;
+            for (int i = 0; i < array.Length; i++)
+                if (array[i] == num)
+                {
+                    position = i;
+                    break;
+                }
+        }
+
+        public List<int> Distinct(int[] array)
+        {
+            List<int> unique = new List<int>();
+            for (int i = 0; i < array.Length; i++)
+                if (unique.IndexOf(array[i]) == -1)
+                    unique.Add(array[i]);
+            return unique;
+        }
+    }
+}
