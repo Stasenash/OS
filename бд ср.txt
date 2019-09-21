@@ -1,0 +1,22 @@
+-- А4. Найти номера клиентов с улицы Танкистов, у которых нет номеров телефона в базе (использовать идентификатор улицы при поиске)
+select n_client
+from client
+where N_STREET = (select n_street from street where lower(c_street) =  'танкистов') and N_PHONE is null;
+
+--B1. Вывести без повторений номера тарифов по начислениям за сентябрь 2008г., у которых номера клиентов 117, 51, 88. Нельзя использовать OR.
+select distinct n_tariff 
+from computation
+where to_number(to_char(D_COMPUTATION,'MM')) = 9
+and to_number(to_char(D_COMPUTATION,'YYYY')) = 2008
+and n_client in (117,51,88);
+
+--C2. Вывести столбец с названием "Обращение" по тем людям, у которых нет номера телефона. 
+--Данные в столбце будут соответствовать шаблону "Уважаемый(ая), [Имя Отчество]. Просьба заполнить номер телефона". Вместо "[Имя Отчество]" подставить данные из таблицы.
+select 'Уважаемый(ая) ' ||c_first_name||' '|| c_second_name || '. Просьба заполнить номер телефона.' as Обращение
+from client
+where N_PHONE is null;
+
+--D4. Вывести информацию о клиентах, имеющих телефонный номер, состоящий не более чем из 7 цифр
+select c_last_name,c_first_name,c_second_name, N_PHONE
+from client
+where length(N_PHONE) <=7;
