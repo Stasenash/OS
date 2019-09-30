@@ -1,0 +1,77 @@
+select t.cnum, t.cname from MARKET.CUSTOMERS t
+where t.city = 'London'
+union ALL
+select snum, sname from MARKET.SALESPEOPLE t1
+where city = 'London';
+
+select t.CITY
+from MARKET.CUSTOMERS t
+union ALL
+select t1.city
+from MARKET.SALESPEOPLE t1;
+
+select 1 from dual
+union all
+select 2 from dual
+minus
+select 1 from dual;
+
+select city from MARKET.CUSTOMERS
+minus
+select city from MARKET.SALESPEOPLE;
+
+--пересечение
+
+select 1, 1 from dual
+union all
+select 2, 1 from dual
+intersect
+select 1, 2 from dual;
+
+select * from MARKET.ORDERS
+intersect
+select * from MARKET.ORDERS_UPDATE;
+
+--декартово произв
+
+select * from MARKET.ORDERS, MARKET.ORDERS_UPDATE;
+select * from MARKET.ORDERS cross join MARKET.ORDERS_UPDATE;
+
+
+--Вывести номера, даты и суммы всех заказов, сделанных в апреле 2000 года, с именами покупателя и продавца, сделавшего заказ 
+select t.ONUM, t.ODATE, t.AMT, c.CNAME, s.SNAME from market.orders t
+join market.customers c on c.CNUM = c.CNUM
+join market.salespeople s on s.SNUM = s.SNUM
+where t.ODATE >= to_date('01.04.2000', 'dd.mm.yyyy')
+and t.ODATE < to_date('01.05.2000','dd.mm.yyyy');
+
+select c.cname, s.sname from MARKET.CUSTOMERS c
+join MARKET.SALESPEOPLE s on  c.CITY = s.CITY;
+
+--Вывести информацию о заказах с указанием имен продавцов, их выполнивших.  В результат запроса включить и тех продавцов, которые не выполнили ни одного заказа
+select * from MARKET.SALESPEOPLE s left join MARKET.ORDERS o on s.SNUM = o.SNUM;
+--В предыдущем запросе учитывать только заказы, выполненные в период апрель-май 2000 года
+select * from MARKET.SALESPEOPLE s left join MARKET.ORDERS o on s.SNUM = o.SNUM
+where o.ODATE >= to_date('01.04.2000','dd.mm.yyyy')
+and o.ODATE < to_date('01.06.2000','dd.mm.yyyy');
+--отсекаем строки не подходящ по дате
+
+select * from MARKET.SALESPEOPLE s left join MARKET.ORDERS o on s.SNUM = o.SNUM
+and o.ODATE >= to_date('01.04.2000','dd.mm.yyyy')
+and o.ODATE < to_date('01.06.2000','dd.mm.yyyy');
+--не отсекаем
+
+--Вывести всю информацию о клиентах, которые не сделали ни одного заказа
+select * from MARKET.CUSTOMERS c
+where not exists (select * from MARKET.ORDERS o where o.cnum = c.cnum);
+--Вывести всю информацию о продавцах, за которыми не закреплен ни один клиент
+select * from MARKET.SALESPEOPLE s
+where not exists (select * from MARKET.CUSTOMERS c where c.SNUM = s.SNUM);
+--Вывести всю информацию о продавцах, за которыми не закреплен ни один клиент, проживающий в том же городе, что и сам продавец
+select * from MARKET.SALESPEOPLE s
+where not exists (select * from MARKET.CUSTOMERS c where c.SNUM = s.SNUM and c.city = s.city);
+
+select * from MARKET.CUSTOMERS c
+left join MARKET.CUSTOMERS s
+on not(c.SNUM = s.SNUM)
+where not (c.CITY = s.CITY);
