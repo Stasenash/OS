@@ -1,0 +1,184 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace AlgLab2
+{
+    class Program
+    {
+        public static int Priority(string op) 
+        {
+            if (op == "^" || op == "cos" || op == "sin" || op == "ln" || op == "sqrt")
+                return 1;
+            else if (op == "*" || op == ":")
+                return 2;
+            else return 3;
+        }
+
+        public static string Translate(StreamReader inputFile, int length, string[] allSymbol,
+            string[] operations)
+        {
+            Stack<string> stack = new Stack<string>();
+            string output = "";
+            for (int i = 0; i < length; i++)
+            {
+                if (operations.Any(operation => operation == allSymbol[i]))
+                {
+                    if (stack.Count == 0)
+                        stack.Push(allSymbol[i]);
+                    else
+                    {
+                        int pr1 = Priority(stack.Peek());
+                        int pr2 = Priority(allSymbol[i]);
+                        if (pr1 > pr2)
+                            stack.Push(allSymbol[i]);
+                        else if (stack.Peek() != "(" && stack.Peek() != ")")
+                        {
+                            output = output + stack.Pop() + ' ';
+                            stack.Push(allSymbol[i]);
+                        }
+                        else
+                            stack.Pop();
+                    }
+                }
+                else if (allSymbol[i] == "(")
+                {
+                    i++;
+                    var list = new List<string>();
+                    while (allSymbol[i] != ")")
+                    {
+                        list.Add(allSymbol[i]);
+                        i++;
+                    }
+                    output+=Translate(inputFile, list.Count, list.ToArray(), operations);
+                }
+                else
+                {
+                    if (allSymbol[i].ToCharArray().All(char.IsDigit))
+                        output = output + allSymbol[i] + ' ';
+                    else
+                    {
+                        string line = inputFile.ReadLine();
+                        string[] l = line.Split(new char[] { ' ' },
+                                  StringSplitOptions.RemoveEmptyEntries);
+                        output = output + l[l.Length - 1] + ' ';
+                    }
+                }
+            }
+            while (stack.Count != 0)
+            {
+                if (stack.Peek() != "(" && stack.Peek() != ")")
+                    output = output + stack.Pop() + ' ';
+                else
+                    stack.Pop();
+            }
+            return output;
+        }
+
+        public static string TranslationInInfixEntry(string input, StreamReader inputFile)
+        {
+            Stack<string> stack = new Stack<string>();
+            string output = "";
+            string[] operations = { "ln", "cos", "sin", "sqrt", "^", "+", "-", "*", ":"};
+
+            string[] allSymbol = input.Split(new char[] { ' ' },
+            StringSplitOptions.RemoveEmptyEntries);
+            int lengthOutputString = allSymbol.Length;
+            return Translate(inputFile, lengthOutputString, allSymbol, operations);
+        }
+
+        public static int HowMachNumber(string op)
+        {
+            if (op == "ln" || op == "cos" || op == "sin" || op == "sqrt")
+                return 1;
+            else return 2;
+        }
+
+        public static double CalculateTheValue(string input)
+        {
+            Stack<double> stack = new Stack<double>();
+            string[] operations = { "ln", "cos", "sin", "sqrt", "^", "+", "-", "*", ":" };
+            double number = 0;
+            double output = 0;
+
+            string[] allSymbol = input.Split(new char[] { ' ' },
+    StringSplitOptions.RemoveEmptyEntries);
+            int lengthInputString = allSymbol.Length;
+
+            for (int i = 0; i < lengthInputString; i++)
+            {
+                if (operations.Any(operation => operation == allSymbol[i]))
+                {
+                    if (HowMachNumber(allSymbol[i]) == 1)
+                    {
+                        number = stack.Pop();
+                        if (allSymbol[i] == "sin")
+                        {
+                            number = Math.Sin((number * Math.PI) / 180);
+                            stack.Push(number);
+                        }
+                        else if (allSymbol[i] == "cos")
+                        {
+                            number = Math.Cos((number * Math.PI) / 180);
+                            stack.Push(number);
+                        }
+                        else if (allSymbol[i] == "sqrt")
+                        {
+                            number = Math.Sqrt(number);
+                            stack.Push(number);
+                        }
+                        else
+                        {
+                            number = Math.Log(number);
+                            stack.Push(number);
+                        }
+                        output += number;
+                    }
+                    else
+                    {
+                        double first = stack.Pop();
+                        double second = stack.Pop();
+                        if (allSymbol[i] == "^")
+                            number = Math.Pow(second, first);
+                        else if (allSymbol[i] == "*")
+                        {
+                            number = second * first;
+                            stack.Push(number);
+                        }
+                        else if (allSymbol[i] == ":")
+                        {
+                            number = second / first;
+                            stack.Push(number);
+                        }
+                        else if (allSymbol[i] == "+")
+                        {
+                            number = second + first;
+                            stack.Push(number);
+                        }
+                        else
+                        {
+                            number = second - first;
+                            stack.Push(number);
+                        }
+
+                    }
+
+                }
+
+                else stack.Push(Convert.ToDouble(allSymbol[i]));
+            }
+            output = stack.Pop();
+            return output;
+        }
+
+        static void Main()
+        {
+            StreamReader inputFile = new StreamReader("input.txt");
+            Console.WriteLine(CalculateTheValue(TranslationInInfixEntry(inputFile.ReadLine(),
+inputFile)));
+        }
+    }
+}
