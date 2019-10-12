@@ -1,0 +1,79 @@
+--2Найти суммарный рейтинг покупателей, прикрепленных к продавцу ‘Peel’
+select sum(c.raiting)
+from Market.customers c join MARKET.SALESPEOPLE s on c.SNUM = s.SNUM 
+where lower(s.SNAMe) ='peel';
+
+--3Вывести максимальный и минимальный размер комиссионных у продавцов
+select min(s.COMM * o.AMT), max(s.COMM * o.AMT)
+from MARKET.SALESPEOPLE s join MARKET.Orders o on s.SNUM = o.SNUM;
+
+--4Подсчитать количество покупателей из Лондона
+select count (c.CNUM)
+from MARKET.CUSTOMERS c
+where lower(c.CITY) = 'london';
+
+--5На какую общую сумму были сделаны заказы с марта по май 2010 года?
+select sum(o.AMT)
+from MARKET.ORDERS o
+where o.ODATE >= to_date('01.03.2010','dd.mm.yyyy') 
+and o.ODATE < to_date('01.06.2010','dd.mm.yyyy');
+
+--6Сколько заказов было сделано покупателями в апреле 2000 года
+select count(o.CNUM)
+from MARKET.ORDERS o
+where o.ODATE >= to_date('01.04.2000','dd.mm.yyyy')
+and o.ODATE < to_date('01.05.2000','dd.mm.yyyy');
+
+--Вывести средний размер комиссионных продавцов для каждого города (указать также город в результате запроса). Отсортировать результаты по убыванию
+select s.CITY, AVG(s.COMM)
+from MARKET.SALESPEOPLE s
+group by s.city
+order by s.COMM;
+
+--Вывести число покупателей, закрепленных к каждому из продавцов (указать также имя и город продавца в результате запроса).Отсортировать по именам продавцов в алфавитном порядке
+select s.SNAME,s.CITY, count(c.CNUM)
+from  MARKET.SALESPEOPLE s join MARKET.CUSTOMERS c on s.SNUM = c.SNUM
+group by s.SNAME, s.CITY
+order by s.SNAME;
+
+--Найти средний чек (среднюю сумму заказа) для каждого месяца (указать также в результате месяц и год). Отсортировать в порядке следования месяцев в году
+select avg(o.AMT), o.ODATE
+from MARKET.ORDERS o
+group by o.ODATE
+order by o.ODATE;
+
+--Вывести максимальный рейтинг покупателя в каждом городе. Не включать в результат запроса города с максимальными рейтингами менее 200
+select c.city, max(c.raiting)
+from market.customers c
+group by c.city
+having max(c.raiting)>=200;
+
+--Вывести средний размер заказа покупателей. Включить в результат запроса только покупателей, сделавших более 1 заказа. Отсортировать в порядке возрастания среднего
+select avg(o.AMT), c.CNAME
+from MARKET.ORDERS o join MARKET.CUSTOMERS c on o.CNUM = c.CNUM
+group by c.CNAME
+having count(o.CNUM) > 1
+order by avg(o.AMT);
+
+--Вывести сумму заказов за каждый месяц 2000 года. Исключить месяцы, в котором было сделано менее 3 заказов. Отсортировать в порядке следования месяцев в году
+select trunc(o.ODATE,'mm'), sum(o.AMT)
+from MARKET.ORDERS o
+group by trunc(o.ODATE,'mm')
+having count(*) > 2 --trunc(o.ODATE,'mm')
+order by trunc(o.ODATE,'mm');
+
+--Вывести минимальную месячную сумму заказов из всех месяцев в году
+select min(sum(o.amt))
+from MARKET.ORDERS o
+group by o.ODATE;
+
+
+--Вывести максимальный размер комиссионных из средних размеров комиссионных продавцов одного города (сгруппированных по городам)
+select max(avg(s.COMM))
+from market.salespeople s
+group by s.CITY;
+
+--Вывести максимальный размер комиссионных из средних размеров комиссионных продавцов одного города (сгруппированных по городам)
+select max(avg(s.COMM * o.AMT)) as avg_sum_com
+from market.salespeople s join market.orders o on o.SNUM = s.SNUM 
+group by s.CITY;
