@@ -48,7 +48,7 @@ namespace BinTree
             }
         }
 
-       
+
         public void Add(int key)
         {
             if (Root == null)
@@ -177,6 +177,92 @@ namespace BinTree
         public Node Delete(int value) => Delete(Root, value);
 
         public override string ToString() => GetInsideRoot(Root, 'k');
+
+        //public string Draw(Node root, int difference, int heigth, char flag)
+        //{
+        //    StringBuilder stringBuilder = new StringBuilder();
+        //    if (root != null)
+        //    {
+        //        switch (flag)
+        //        {
+        //            case 'k':
+        //                stringBuilder.Append(' ', heigth);
+        //                stringBuilder.Append(root.Key + "\n");
+        //                break;
+        //            case 'l':
+        //                stringBuilder.Append(' ', heigth - difference);
+        //                stringBuilder.Append(root.Key + "\n");
+        //                break;
+        //            case 'r':
+        //                stringBuilder.Append(' ', heigth + difference);
+        //                stringBuilder.Append(root.Key + "\n");
+        //                break;
+        //        }
+        //        int y = Console.CursorTop;
+        //        int x = Console.CursorLeft;
+        //        stringBuilder.Append(Draw(root.Left, difference + 1, heigth, 'l'));
+        //        Console.CursorLeft = x;
+        //        Console.CursorTop = y;
+        //        stringBuilder.Append(Draw(root.Right, difference + 1, heigth, 'r'));
+        //    }
+        //    return stringBuilder.ToString();
+        //}
+
+        public void Draw(Node root, int difference, int heigth, char flag)
+        {
+            List<string> values = new List<string>();
+            if (root != null)
+            {
+                switch (flag)
+                {
+                    case 'k':
+                        Console.Write(new string(' ', heigth));
+                        Console.Write(root.Key + "\n");
+                        break;
+                    case 'l':
+                        values.Add(new string(' ', heigth - difference));
+                        values.Add(root.Key + "    \n");
+                        break;
+                    case 'r':
+                        values.Add(new string(' ', heigth + difference));
+                        values.Add(root.Key + "\n");
+                        break;
+                }
+                int y = Console.CursorTop;
+                int x = Console.CursorLeft;
+                Draw(root.Left, difference + 1, heigth, 'l');
+                Console.SetCursorPosition(x, y);
+                Draw(root.Right, difference + 1, heigth, 'r');
+                foreach (var el in values)
+                    Console.Write(el);
+                Console.WriteLine();
+                Console.SetCursorPosition(x, heigth + difference);
+            }
+        }
+
+        public void DrawAnother(Node root, int treeHeight, int level)
+        {
+            int spaceCount = level + 2;
+            Console.Write(new string(' ', spaceCount));
+            Console.Write("|-");
+            if (root != null)
+            {
+                Console.Write(root.Key);
+                Console.WriteLine();
+                DrawAnother(root.Left, treeHeight, level + 1);
+                DrawAnother(root.Right, treeHeight, level + 1);
+            }
+        }
+
+        public void PrintTree(Node root, String indent, bool last, string mod)
+        {
+            if (root == null) return;
+            Console.WriteLine(indent + "+- " + (string.IsNullOrEmpty(mod) ? "" : ("(" + mod +") ")) + root.Key);
+            indent += last ? "   " : "|  ";
+
+            PrintTree(root.Left, indent, false, "l");
+            PrintTree(root.Right, indent, true, "r");
+        }
     }
     class Program
     {
@@ -184,17 +270,24 @@ namespace BinTree
         {
             BinaryTree binTree = new BinaryTree();
             Random rnd = new Random();
-            int nodeCount = 5;
+            int nodeCount = rnd.Next(15, 50);
             int[] nodesArray = new int[nodeCount];
 
             for (int i = 0; i < nodeCount; i++)
-                nodesArray[i] = rnd.Next(1, 50);
+                binTree.Add(rnd.Next(1, 50));
             Console.WriteLine("Бинарное дерево поиска из первой части задания:\n" + binTree);
 
+            // binTree.Draw(binTree.Root, 0, binTree.GetHeight(), 'k');
+
+            binTree.PrintTree(binTree.Root, "", true, null);
+
+
             int[] arr = binTree.GetSortedNumRec();
-           
-            Console.WriteLine("Высота дерева 1: " + binTree.GetHeight() + "\n");
+
             
+            Console.WriteLine("Высота дерева 1: " + binTree.GetHeight() + "\n");
+
+
             BinaryTree bigBT = new BinaryTree();
 
             for (int i = 0; i < 50; i++)
@@ -210,7 +303,6 @@ namespace BinTree
                 bigBT.Root = bigBT.Delete(x);
                 Console.WriteLine("Дерево с удаленной вершиной:\n" + bigBT);
             }
-            //отрисовать 
         }
     }
 }
