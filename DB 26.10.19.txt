@@ -1,0 +1,118 @@
+--Найти всех продавцов из того же города, что и покупатель ‘Clemens’
+select s.SNAME
+from MARKET.SALESPEOPLE s
+where s.CITY = (select c.CITY from MARKET.CUSTOMERS c where c.CNAME = 'Clemens');
+--Найти средний чек по заказам для продавца ‘Motika’
+select avg(o.AMT) 
+from MARKET.ORDERS o 
+where o.SNUM =(select s.SNUM from MARKET.SALESPEOPLE s where s.SNAME = 'Motika');
+--У кого из продавцов размер комиссионных больше среднего?
+select s.SNAME
+from MARKET.SALESPEOPLE s
+where s.COMM > (select avg(sp.COMM) from MARKET.SALESPEOPLE sp);
+--Найти суммарный рейтинг покупателей, прикрепленных к продавцу ‘Peel’
+select sum(c.RAITING)
+from MARKET.CUSTOMERS c
+where c.SNUM = (select s.SNUM from MARKET.SALESPEOPLE s where s.SNAME = 'Peel');
+--Найти покупателей с максимальным или минимальным рейтингом
+select c.CNAME, c.RAITING
+from MARKET.CUSTOMERS c
+where c.RAITING = (select max(cm.RAITING) from MARKET.CUSTOMERS cm)
+or c.RAITING = (select min(cm.RAITING) from MARKET.CUSTOMERS cm)
+order by 2;
+--Вывести номера, даты и размеры заказов, размер которых превышает средний чек за этот период
+select o.ONUM, o.ODATE, o.AMT
+from MARKET.ORDERS o
+where o.AMT > (select avg(ord.AMT) from MARKET.ORDERS ord)
+and o.ODATE = (select ord.ODATE from MARKET.ORDERS ord where o.ONUM = ord.ONUM)
+order by 2;
+--
+select o.ONUM, o.ODATE, o.AMT
+from MARKET.ORDERS o
+where o.AMT > (select avg(ord.AMT) from MARKET.ORDERS ord where o.ODATE = ord.ODATE);
+--Вывести номера, даты и размеры заказов, размер которых превышает средний чек за этот период
+select o.ONUM, o.ODATE, o.AMT
+from MARKET.ORDERS o
+where o.AMT > (select avg(ord.AMT) from MARKET.ORDERS ord);
+--Подсчитать количество таких покупателей для каждого из городов, рейтинг которых превышает средний рейтинг покупателей из Лондона
+select c.CITY, count(c.CNAME)
+from MARKET.CUSTOMERS c
+where c.RAITING > (select avg(cm.RAITING) from MARKET.CUSTOMERS cm where cm.CITY = 'London')
+group by c.CITY;
+--Вывести общую стоимость заказов для тех продавцов (с указанием номера продавца), у которых эта общая сумма превышает размер самого 
+--большого по стоимости заказа за 2000-й год
+select ord.SNUM, sum(ord.AMT)
+from MARKET.ORDERS ord
+group by ord.SNUM
+having sum(ord.AMT) > (select max(o.AMT) from MARKET.ORDERS o where o.ODATE = to_date('2000','yyyy'));
+
+-------------
+
+--Найти все заказы продавцов из Барселоны и Лондона IN
+select o.CNUM, o.SNUM
+from MARKET.ORDERS o
+where o.SNUM in (select s.SNUM from MARKET.SALESPEOPLE s where s.CITY in ('London', 'Barcelona'));
+--Найти все заказы продавцов из Барселоны и Лондона EXISTS
+select o.CNUM, o.SNUM
+from MARKET.ORDERS o
+where exists (select s.SNUM from MARKET.SALESPEOPLE s where s.CITY in ('London', 'Barcelona') and s.SNUM = o.SNUM);
+--Вывести покупателей, у которых размеры рейтинга отличаются от рейтинга любого из покупателей Лондона
+select c.CNAME, c.RAITING
+from MARKET.CUSTOMERS c
+where c.RAITING not in(select cm.RAITING from MARKET.CUSTOMERS cm where cm.CITY = 'London');
+--Вывести покупателей, у которых размеры рейтинга отличаются от рейтинга любого из покупателей Лондона
+select c.CNAME, c.RAITING
+from MARKET.CUSTOMERS c
+where not exists(select cm.RAITING from MARKET.CUSTOMERS cm where cm.CITY = 'London' and cm.RAITING = c.RAITING);
+--Вывести информацию о продавцах, которые не совершали заказов за 2000-й год
+select *
+from MARKET.SALESPEOPLE s
+where not exists (select o.SNUM from MARKET.ORDERS o where s.SNUM = o.SNUM and o.ODATE = to_date('2000','yyyy'));
+--Вывести список покупателей, которые проживают в городах, где находится 2 или более продавцов
+select *
+from MARKET.CUSTOMERS c
+where exists (select count(s.SNUM) from MARKET.SALESPEOPLE s where s.CITY = c.CITY having count(s.SNUM) >= 2);
+--Вывести информацию о продавцах, которые имеют размер комиссионных меньше любого из размеров комиссионных продавцов Лондона
+select *
+from MARKET.SALESPEOPLE s
+where exists (select sp.SNUM from MARKET.SALESPEOPLE sp where sp.CITY = 'London' and s.COMM < sp.COMM);
+--Вывести информацию о продавцах из Лондона с указанием общей суммы и количества их заказов с марта по май 2000-го года, 
+--если есть хотя бы один заказ с суммой 5000 за тот же период
+select s.SNUM, s.SNAME, sum(ord.AMT)
+from MARKET.SALESPEOPLE s join MARKET.ORDERS ord on s.SNUM = ord.SNUM
+where exists 
+  (select count(o.SNUM)
+  from MARKET.ORDERS o 
+  where o.AMT > 5000 
+  and o.ODATE = ord.ODATE
+  and s.SNUM = o.SNUM 
+  having count(o.SNUM) > 0)
+and s.CITY = 'London' 
+and ord.ODATE >= to_date('01.03.2000','dd.mm.yyyy')
+and ord.ODATE < to_date('01.06.2000','dd.mm.yyyy')
+group by s.SNUM, s.SNAME;
+--Каков средний чек заказов, выполненных продавцами, имеющими максимальный размер комиссионных?
+select avg(o.AMT)
+from MARKET.ORDERS o
+where exists (select max(s.COMM) from MARKET.SALESPEOPLE s where o.SNUM = s.SNUM);
+
+-- тема 3
+
+--Вывести количество заказов, номера и имена продавцов, у которых было более 2-х заказов с марта по май 2000-го года
+
+--Вывести информацию о продавцах, имеющих минимальный размер комиссионных в своем городе
+select *
+from MARKET.SALESPEOPLE s 
+where (s.COMM,s.CITY) in (SELECT min(s2.comm), s2.CITY from MARKET.SALESPEOPLE s2 group by s2.CITY);
+--Вывести всю информацию о заказах, которые были сделаны самыми последними (по дате) для каждого из месяцев в 2000 году
+select *
+from MARKET.ORDERS o
+where (trunc(o.odate,'mm'),o.ODATE) in (select trunc(ord.odate,'mm'), max(ord.ODATE) from MARKET.ORDERS ord group by trunc(ord.odate,'mm'));
+
+
+--Вывести информацию о продавцах, с указанием того, какое количество покупателей относительно общего числа покупателей (в %) они обслуживают (по закреплению покупателя к продавцу)
+select s.SNAME, count(*) / (select count(*) from MARKET.CUSTOMERS cm where cm.SNUM is not null)
+from MARKET.SALESPEOPLE s join MARKET.CUSTOMERS c on c.SNUM = s.SNUM
+group by s.SNAME;
+
+--Вывести информацию о покупателях, с указанием того, какую долю (в %) составляют заказы этого покупателя в общем объеме всех заказов (по стоимости заказов)
