@@ -1,0 +1,44 @@
+--А3. Вывести имя первого сотрудника компании (принятого на работу самым первым по дате), а также название его должности и название отделa
+select 
+emp.HIRE_DATE
+,emp.FIRST_NAME
+, emp.LAST_NAME
+, dep.DEPARTMENT_NAME
+, jbs.JOB_TITLE
+from HR.employees emp 
+join HR.DEPARTMENTS dep on emp.DEPARTMENT_ID = dep.DEPARTMENT_ID 
+join HR.JOBS jbs on jbs.JOB_ID = emp.JOB_ID
+where emp.HIRE_DATE = (select min(hire_date) from HR.employees);
+--B3. Вывести информацию о программистах, которые получают зарплату ниже, чем у любого из сотрудников отдела продаж (department name = Sales).
+select *
+from HR.EMPLOYEES emp 
+where emp.SALARY < (    select min(e.salary)
+                        from HR.EMPLOYEES e 
+                        join HR.DEPARTMENTS d on e.DEPARTMENT_ID = d.DEPARTMENT_ID 
+                        where d.department_name = 'Sales'
+                      ) 
+and lower(emp.JOB_ID) like '%prog%';
+--C. Подзапрос в разделе FROM или SELECT            
+--C2. Вывести информацию о суммарном зарплатном фонде каждого из офисов (локаций) в компании, с указанием их доли (в %) от всего фонда заработной платы в компании
+SELECT 
+d.DEPARTMENT_ID
+,sum(emp.SALARY)
+,round
+        (sum (emp.SALARY) 
+                        /(SELECT sum (SALARY)
+                          FROM HR.EMPLOYEES) 
+                          * 100
+       ,2)
+    FROM HR.DEPARTMENTS d join HR.EMPLOYEES emp on emp.DEPARTMENT_ID = d.DEPARTMENT_ID
+    GROUP BY d.DEPARTMENT_ID
+    order by 1;
+--D. Выборка TOP-N
+--D2. Вывести информацию о 3-х самых распространенных должностях в нашей компании, с указанием названия должности, 
+--количества сотрудников на этой должности их их среднего оклада для этой должности
+select * from(select emp.JOB_ID, jbs.JOB_TITLE, count(emp.EMPLOYEE_ID), avg(emp.SALARY)
+from HR.EMPLOYEES emp join HR.JOBS jbs on jbs.JOB_ID = emp.JOB_ID
+group by emp.JOB_ID,jbs.JOB_TITLE
+order by 3 desc)
+where rownum <= 3;
+
+
