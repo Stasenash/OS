@@ -1,0 +1,98 @@
+CREATE TABLE customers
+AS SELECT * FROM Market.customers;
+
+CREATE TABLE orders
+AS SELECT * FROM Market.orders;
+
+CREATE TABLE Salespeople
+AS SELECT * FROM Market.Salespeople;
+
+-----добавили таблицы к себе----
+
+--Добавить покупателя Bush из Вашингтона c привязкой к новому продавцу Bond из Лондона
+insert into SALESPEOPLE values (1011, 'Bond', 'London', 0.11);
+commit; -- сохранить изменения в БД
+--отдельно создали бонда
+
+insert into CUSTOMERS (cnum,cname,city,raiting,snum) --можно прописывать можно нет
+values (2009, 'Bush', 'Washington',100,1011);
+commit;
+
+--Добавить одной командой по одному заказу каждому продавцу с любой датой текущего года
+select * from orders; --смотрим список полей
+
+insert into orders select 3014+rownum,100, to_date('01.03.2000','dd.mm.yyyy'), 2008,s.SNUM from salespeople s; 
+--разные продавцы, один и тот же покупатель, одна и та же дата и одна и та же сумма
+commit;
+
+--Добавить два заказа от текущей даты для покупателя Bush и созданного продавца Bond 
+insert into orders select 3024+rownum, 1000, to_date('09.11.2019','dd.mm.yyyy'), 2009, 1011 from SALESPEOPLE s;
+commit;
+--два раза вызвать для двух заказов (три для трех и тд)
+
+--можно указывать дату сейчас
+insert into orders values (3025, 1000, trunc(sysdate), 2009, 1011);
+
+delete from SALESPEOPLE
+where snum = 1012;
+commit;
+--Добавить нового продавца Freddy из Нью-Йорка с комиссионными равными максимальным комиссионным продавцов + 0,05
+insert into SALESPEOPLE values (1012, 'Freddy', 'New York', (select max(s.COMM)+0.05 from salespeople s));
+commit;
+
+--Добавить дополнительный заказ для каждого покупателя, которые делали заказ из Лондона. 
+--Сумма нового заказа в полтора раза больше прошлого. Новый заказ провести датой на месяц позднее даты прошлого заказа.
+insert into orders
+select 
+  (select 
+  max(ord.onum) from orders ord)+rownum
+  , amt
+  , odate
+  , cnum
+  , snum 
+  from
+    (select 
+      max(o.AMT) * 1.5 as amt
+      , add_months(max(o.odate),1) as odate
+      , o.cnum
+      , max(o.snum) as snum
+      from orders o join customers c on c.cnum = o.cnum
+      where c.city = 'London'
+      group by o.cnum);
+commit;
+
+--обновление
+--Для всех покупателей продавца Peel выставить рейтинг 100
+update customers c set c.raiting = 100
+where c.snum = (select s.snum from salespeople s where s.sname = 'Peel');
+commit;
+
+--Передать всех покупателей продавца Peel продавцу Motika и увеличить рейтинг данных покупателей на 50
+update customers c set c.snum = (select snum from salespeople where sname = 'Motika'), c.raiting = c.raiting +50
+where c.SNUM = (select snum from salespeople where sname = 'Peel');
+commit;
+
+--Увеличить на 100 рейтинг покупателей, которые совершили покупки на сумму выше средней за последний год
+update customers c set c.raiting = c.raiting + 100
+where c.cnum in (select o.cnum from orders o where o.AMT > (select avg(amt) from orders));
+commit;
+
+--Уменьшить в два раза комиссионные для всех продавцов, которые имеют общую сумму заказов меньше 100 за последний год
+update salespeople s set s.comm = s.comm / 2
+where s.snum in (select o.snum from orders o group by o.snum having sum(o.amt) < 100);
+
+
+--delete
+--Удалить заказы продавцов, которые проживают в разных городах со своими покупателями
+delete orders o where o.snum in (select s.snum from customers c join salespeople s on s.snum = c.snum and c.city<>s.city);
+
+
+--Удалить покупателей, которые не сделали ни одного заказа
+delete salespeople s where s.SNUM not in (select o.snum from orders o join salespeople sp on o.snum = sp.snum);
+
+
+
+
+
+
+
